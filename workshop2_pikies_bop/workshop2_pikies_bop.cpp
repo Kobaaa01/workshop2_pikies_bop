@@ -8,33 +8,45 @@ const int MAX_TRAPDOORS = 100;
 const int MAX_TREASURES = 100;
 const int MAX_PLAYERS = 9;
 const int MAX_ROWS = 11;
-const int MAX_COLUMNS = 11;
+const int MAX_COLUMNS = 11; 
 
-bool guessedPassword[10] = { false };
-bool pickedUp[10] = { false };
-bool wonGame[10] = { false };
-bool lostGame[10] = { false };
+bool guessedPassword[MAX_PLAYERS];
+bool pickedUp[MAX_PLAYERS];
+bool wonGame[MAX_PLAYERS];
+bool lostGame[MAX_PLAYERS];
 
-int players[MAX_PLAYERS];
-
+int playerIds[MAX_PLAYERS];
 int playerX[MAX_PLAYERS] = { 0 };
 int playerY[MAX_PLAYERS] = { 0 };
-
+// test //
 vector<int> trapdoorsX;
 vector<int> trapdoorsY;
+
 vector<int> treasuresX;
 vector<int> treasuresY;
+
 int wallsX[MAX_WALLS];
 int wallsY[MAX_WALLS];
+
+struct Player
+{
+    int x, y;
+    bool guessedPassword = false;
+    bool pickedUp = false;
+    bool wonGame = false;
+    bool lostGame = false;
+};
+Player player[MAX_PLAYERS];
+
 
 // Player adding function //
 void addPlayer()
 {
     for (int j = 0; j < MAX_PLAYERS; j++)
     {
-        if (players[j] == 0)
+        if (playerIds[j] == 0)
         {
-            players[j] = j + 1;
+            playerIds[j] = j + 1;
             break;
         }
     }
@@ -47,7 +59,7 @@ void changePlayer(int& activePlayer)
     {
         for (int i = activePlayer; i < MAX_PLAYERS; i++)
         {
-            if (!lostGame[i] && players[i] != 0)
+            if (!lostGame[i] && playerIds[i] != 0)
             {
                 activePlayer = i + 1;
                 return;
@@ -57,7 +69,7 @@ void changePlayer(int& activePlayer)
 
     for (int j = 0; j < activePlayer - 1; j++)
     {
-        if (!lostGame[j] && players[j] != 0)
+        if (!lostGame[j] && playerIds[j] != 0)
         {
             activePlayer = j + 1;
             return;
@@ -69,7 +81,7 @@ void changePlayer(int& activePlayer)
 void guessPassword(int& activePlayer)
 {
     unsigned char password = 123;
-    if (!guessedPassword[activePlayer - 1])
+    if (!player[activePlayer - 1].guessedPassword)
     {
         bool passwordGuessed = true;
         for (int i = 0; i < 8; i++)
@@ -95,7 +107,7 @@ void guessPassword(int& activePlayer)
         }
         if (passwordGuessed)
         {
-            guessedPassword[activePlayer - 1] = true;
+            player[activePlayer - 1].guessedPassword = true;
             cout << "PASSWORD GUESSED" << endl;
         }
         else
@@ -113,23 +125,23 @@ void movePlayer(int& activePlayer)
 {
     char direction;
     cin >> direction;
-    if (guessedPassword[activePlayer - 1])
+    if (player[activePlayer - 1].guessedPassword)
     {
         if (direction == 'N')
         {
-            (playerX[activePlayer - 1])--;
+            (player[activePlayer-1].x)--;
         }
         else if (direction == 'S')
         {
-            (playerX[activePlayer - 1])++;
+            (player[activePlayer-1].x)++;
         }
         else if (direction == 'E')
         {
-            (playerY[activePlayer - 1])++;
+            (player[activePlayer-1].y)++;
         }
         else if (direction == 'W')
         {
-            (playerY[activePlayer - 1])--;
+            (player[activePlayer-1].y)--;
         }
     }
     else
@@ -138,14 +150,14 @@ void movePlayer(int& activePlayer)
     }
     for (int i = 0; i < MAX_TRAPDOORS; i++)
     {
-        if (playerY[activePlayer - 1] == trapdoorsY[i] && playerX[activePlayer - 1] == trapdoorsX[i])
+        if (player[activePlayer-1].y == trapdoorsY[i] && player[activePlayer-1].x == trapdoorsX[i])
         {
             cout << "Player " << activePlayer << " lost" << endl;
             lostGame[activePlayer - 1] = true;
             return;
         }
     }
-    if (playerY[activePlayer - 1] == 0 && playerX[activePlayer - 1] == 0 && pickedUp[activePlayer - 1])
+    if (player[activePlayer-1].y == 0 && player[activePlayer-1].x == 0 && pickedUp[activePlayer - 1])
     {
         cout << "Player " << activePlayer << " won" << endl;
         wonGame[activePlayer - 1] = true;
@@ -153,7 +165,7 @@ void movePlayer(int& activePlayer)
     if (!pickedUp[activePlayer - 1])
         for (int i = 0; i < treasuresX.size(); i++)
         {
-            if (((playerY[activePlayer - 1] == treasuresY[i]) || (playerY[activePlayer - 1] == treasuresY[i] + 1) || (playerY[activePlayer - 1] == treasuresY[i] - 1)) && ((playerX[activePlayer - 1] == treasuresX[i]) || (playerX[activePlayer - 1] == treasuresX[i] + 1) || (playerX[activePlayer - 1] == treasuresX[i] - 1)))
+            if (((player[activePlayer-1].y == treasuresY[i]) || (player[activePlayer-1].y == treasuresY[i] + 1) || (player[activePlayer-1].y == treasuresY[i] - 1)) && ((player[activePlayer-1].x == treasuresX[i]) || (player[activePlayer-1].x == treasuresX[i] + 1) || (player[activePlayer-1].x == treasuresX[i] - 1)))
             {
                 cout << "You see a treasure at (" << treasuresX[i] << "," << treasuresY[i] << ")" << endl;
                 break;
@@ -161,7 +173,7 @@ void movePlayer(int& activePlayer)
         }
     for (int j = 0; j < trapdoorsX.size(); j++)
     {
-        if (((playerY[activePlayer - 1] == trapdoorsY[j]) || (playerY[activePlayer - 1] == trapdoorsY[j] + 1) || (playerY[activePlayer - 1] == trapdoorsY[j] - 1)) && ((playerX[activePlayer - 1] == trapdoorsX[j]) || (playerX[activePlayer - 1] == trapdoorsX[j] + 1) || (playerX[activePlayer - 1] == trapdoorsX[j] - 1)))
+        if (((player[activePlayer-1].y == trapdoorsY[j]) || (player[activePlayer-1].y == trapdoorsY[j] + 1) || (player[activePlayer-1].y == trapdoorsY[j] - 1)) && ((player[activePlayer-1].x == trapdoorsX[j]) || (player[activePlayer-1].x == trapdoorsX[j] + 1) || (player[activePlayer-1].x == trapdoorsX[j] - 1)))
         {
             cout << "You see a trapdoor at (" << trapdoorsX[j] << "," << trapdoorsY[j] << ")" << endl;
             break;
@@ -173,7 +185,7 @@ void pickUp(int& activePlayer)
 {
     for (int i = 0; i < MAX_TREASURES; i++)
     {
-        if (playerX[activePlayer - 1] == treasuresX[i] && playerY[activePlayer - 1] == treasuresY[i])
+        if (player[activePlayer-1].x == treasuresX[i] && player[activePlayer-1].y == treasuresY[i])
         {
             pickedUp[activePlayer - 1] = true;
         }
@@ -185,9 +197,9 @@ void prt_0(int& activePlayer)
 {
     cout << "Active Player: " << activePlayer << " ";
     cout << "Coordinates: ";
-    cout << playerX[activePlayer - 1] << ", " << playerY[activePlayer - 1];
+    cout << player[activePlayer-1].x << ", " << player[activePlayer-1].y;
     cout << " Entered: ";
-    if (guessedPassword[activePlayer - 1])
+    if (player[activePlayer - 1].guessedPassword)
     {
         cout << "T ";
     }
@@ -229,16 +241,16 @@ void prt_1(int& activePlayer)
 {
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
-        if (players[i] == activePlayer && players[i] != 0)
+        if (playerIds[i] == activePlayer && playerIds[i] != 0)
         {
-            cout << "Active Player: " << players[i] << " ";
-            cout << "Coordinates: " << playerX[i] << ", " << playerY[i] << " ";
+            cout << "Active Player: " << playerIds[i] << " ";
+            cout << "Coordinates: " << player[i].x << ", " << player[i].y << " ";
             cout << "Entered: ";
-            if (guessedPassword[i])
+            if (player[i].guessedPassword)
             {
                 cout << "T ";
             }
-            else if (!guessedPassword[i])
+            else if (!player[i].guessedPassword)
             {
                 cout << "F ";
             }
@@ -271,16 +283,16 @@ void prt_1(int& activePlayer)
             }
             cout << endl;
         }
-        if (players[i] != activePlayer && players[i] != 0)
+        if (playerIds[i] != activePlayer && playerIds[i] != 0)
         {
-            cout << "Player: " << players[i] << " ";
-            cout << "Coordinates: " << playerX[i] << ", " << playerY[i] << " ";
+            cout << "Player: " << playerIds[i] << " ";
+            cout << "Coordinates: " << player[i].x << ", " << player[i].y << " ";
             cout << "Entered: ";
-            if (guessedPassword[i])
+            if (player[i].guessedPassword)
             {
                 cout << "T ";
             }
-            else if (!guessedPassword[i])
+            else if (!player[i].guessedPassword)
             {
                 cout << "F ";
             }
@@ -318,15 +330,15 @@ void prt_1(int& activePlayer)
 int main()
 {
     // Default players 1 and 2 declaration // 
-    players[0] = 1;
-    players[1] = 2;
+    playerIds[0] = 1;
+    playerIds[1] = 2;
 
     treasuresX.push_back(-3);
     treasuresY.push_back(0);
     trapdoorsX.push_back(3);
     trapdoorsY.push_back(0);
     // Default active player //
-    int activePlayer = players[0];
+    int activePlayer = playerIds[0];
 
     // Create the map and make it 11x11 with all dots //
     char mapOfTheGame[MAX_ROWS][MAX_COLUMNS];
