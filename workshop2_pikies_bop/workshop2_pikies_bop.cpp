@@ -22,6 +22,9 @@ struct Player
     bool pickedUp = false;
     bool wonGame = false;
     bool lostGame = false;
+    char playersMap[MAX_ROWS][MAX_COLUMNS];
+    int centerMapX = 5; // X coordinate of the center marker for this player
+    int centerMapY = 5;
 };
 Player player[MAX_PLAYERS];
 
@@ -76,7 +79,7 @@ int trapSize()
     return count;
 }
 
-void setWall(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
+void setWall(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[], int playerIds[])
 {
     for (int i = 0; i < MAX_OBJECTS; i++)
     {
@@ -85,12 +88,20 @@ void setWall(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
             cin >> objects[i].wallX;
             cin >> objects[i].wallY;
             mapOfTheGame[objects[i].wallX + 5][objects[i].wallY + 5] = '#';
+
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (playerIds[j] != 0)
+                {
+                    player[j].playersMap[objects[i].wallX + 5][objects[i].wallY + 5] = '#';
+                }
+            }
             break;
         }
     }
 }
 
-void setTrapdoor(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
+void setTrapdoor(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[], int playerIds[])
 {
     for (int i = 0; i < MAX_OBJECTS; i++)
     {
@@ -99,12 +110,19 @@ void setTrapdoor(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
             cin >> objects[i].trapX;
             cin >> objects[i].trapY;
             mapOfTheGame[objects[i].trapX + 5][objects[i].trapY + 5] = '_';
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (playerIds[j] != 0)
+                {
+                    player[j].playersMap[objects[i].trapX + 5][objects[i].trapY + 5] = '_';
+                }
+            }
             break;
         }
     }
 }
 
-void setTreasure(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
+void setTreasure(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[], int playerIds[])
 {
     for (int i = 0; i < MAX_OBJECTS; i++)
     {
@@ -113,19 +131,33 @@ void setTreasure(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
             cin >> objects[i].treaX;
             cin >> objects[i].treaY;
             mapOfTheGame[objects[i].treaX + 5][objects[i].treaY + 5] = '+';
+            for (int j = 0; j < MAX_PLAYERS; j++)
+            {
+                if (playerIds[j] != 0)
+                {
+                    player[j].playersMap[objects[i].treaX + 5][objects[i].treaY + 5] = '+';
+                }
+            }
             break;
         }
     }
 }
 
 // Player adding function //
-void addPlayer()
+void addPlayer(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
 {
     for (int j = 0; j < MAX_PLAYERS; j++)
     {
         if (playerIds[j] == 0)
         {
             playerIds[j] = j + 1;
+            for (int m = 0; m < MAX_ROWS; m++)
+            {
+                for (int n = 0; n < MAX_COLUMNS; n++)
+                {
+                    player[j].playersMap[m][n] = mapOfTheGame[m][n];
+                }
+            }
             break;
         }
     }
@@ -229,28 +261,84 @@ void seeingTreasure(int& activePlayer)
 }
 
 // Player moving function //
-void movePlayer(int& activePlayer)
-{
+void movePlayer(int& activePlayer, Player player[], int playerIds[]) {
     char direction;
     cin >> direction;
     if (player[activePlayer - 1].guessedPassword)
     {
         if (direction == 'N')
         {
-            (player[activePlayer-1].x)--;
+            player[activePlayer - 1].y--;
+            player[activePlayer - 1].centerMapY++;
+            for (int i = MAX_ROWS - 2; i >= 0; --i)
+            {
+                for (int j = 0; j < MAX_COLUMNS; ++j)
+                {
+                    player[activePlayer - 1].playersMap[i + 1][j] = player[activePlayer - 1].playersMap[i][j];
+                }
+            }
+            for (int j = 0; j < MAX_COLUMNS; ++j)
+            {
+                player[activePlayer - 1].playersMap[0][j] = '.';
+            }
         }
-        else if (direction == 'S')
+        if (direction == 'S')
         {
-            (player[activePlayer-1].x)++;
+
         }
-        else if (direction == 'E')
+        if (direction == 'E')
         {
-            (player[activePlayer-1].y)++;
+
         }
-        else if (direction == 'W')
+        if (direction == 'W')
         {
-            (player[activePlayer-1].y)--;
+
         }
+        for (int i = 0; i < MAX_ROWS; ++i)
+        {
+            for (int j = 0; j < MAX_COLUMNS; ++j)
+            {
+                // Reset each cell to empty
+                player[activePlayer - 1].playersMap[i][j] = '.';
+                for (int p = 0; p < MAX_PLAYERS; p++)
+                {
+                    if (p != activePlayer && player[p].y == 0)
+                    {
+                        player[activePlayer - 1].playersMap[5][5 + player[p].x] = '0' + p;
+                    }
+                    else if (p != activePlayer && player[p].y < 0)
+                    {
+                        player[activePlayer - 1].playersMap[5 - player[p].y][5 + player[activePlayer].x] = '0' + activePlayer;
+                    }
+                }
+                player[activePlayer - 1].playersMap[5][5] = '0' + activePlayer-1;
+                // Update treasures
+                for (int t = 0; t < treaSize(); ++t)
+                {
+                    if (i == objects[t].treaY + 5 && j == objects[t].treaX + 5)
+                    {
+                        player[activePlayer - 1].playersMap[j + 1][i] = '+';
+                    }
+                }
+                // Update traps
+                for (int t = 0; t < trapSize(); ++t)
+                {
+                    if (i == objects[t].trapY + 5 && j == objects[t].trapX + 5)
+                    {
+                        player[activePlayer - 1].playersMap[j + 1][i] = '_';
+                    }
+                }
+                // Update walls
+                for (int t = 0; t < wallsSize(); ++t)
+                {
+                    if (i == objects[t].wallY + 5 && j == objects[t].wallX + 5)
+                    {
+                        player[activePlayer - 1].playersMap[j + 1][i] = '#';
+                    }
+                }
+            }
+        }
+        player[activePlayer - 1].playersMap[player[activePlayer - 1].centerMapY][player[activePlayer - 1].centerMapX] = '^';
     }
     else
     {
@@ -439,7 +527,7 @@ void defaultState(Objects objects[], int playerIds[])
     }
 }
 
-void npsFunction(int& activePlayer, char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
+void npsFunction(int& activePlayer, char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[])
 {
     int numPlayers;
     cin >> numPlayers;
@@ -447,7 +535,7 @@ void npsFunction(int& activePlayer, char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
     {
         playerIds[i] = i + 1;
         cin >> player[i].y >> player[i].x;
-        if (player[i].y >= 0 && player[i].y < MAX_ROWS && player[i].x >= 0 && player[i].x < MAX_COLUMNS) 
+        if (player[i].y >= 0 && player[i].y < MAX_COLUMNS && player[i].x >= 0 && player[i].x < MAX_ROWS)
         {
             mapOfTheGame[5+player[i].y][5+player[i].x] = '0' + i;
         }
@@ -457,7 +545,22 @@ void npsFunction(int& activePlayer, char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
         playerIds[i] = 0;
     }
     activePlayer = 1;
+
+    for (int i = 0; i < MAX_PLAYERS; i++) 
+    {
+        if (playerIds[i] != 0) 
+        {
+            for (int n = 0; n < MAX_ROWS; n++) 
+            {
+                for (int m = 0; m < MAX_COLUMNS; m++) 
+                {
+                    player[i].playersMap[n][m] = mapOfTheGame[n][m];
+                }
+            }
+        }
+    }
 }
+
 
 int main()
 {
@@ -480,6 +583,20 @@ int main()
         for (int j = 0; j < MAX_COLUMNS; j++)
         {
             mapOfTheGame[i][j] = '.';
+        }
+    }
+
+    for (int j = 0; j < MAX_PLAYERS; j++)
+    {
+        if (playerIds[j] != 0)
+        {
+            for (int n = 0; n < MAX_ROWS; n++)
+            {
+                for (int m = 0; m < MAX_COLUMNS; m++)
+                {
+                    player[j].playersMap[n][m] = '.';
+                }
+            }
         }
     }
 
@@ -510,7 +627,7 @@ int main()
                 {
                     for (int j = 0; j < MAX_COLUMNS; j++)
                     {
-                        cout << mapOfTheGame[i][j];
+                        cout << player[activePlayer-1].playersMap[i][j];
                     }
                     cout << endl;
                 }
@@ -522,7 +639,7 @@ int main()
         }
         else if (command == "MOV")
         {
-            movePlayer(activePlayer);
+            movePlayer(activePlayer, player, playerIds);
         }
         else if (command == "END")
         {
@@ -534,7 +651,7 @@ int main()
         }
         else if (command == "NPS")
         {
-            npsFunction(activePlayer, mapOfTheGame);
+            npsFunction(activePlayer, mapOfTheGame, player);
         }
         else if (command == "SKP");
         else if (command == "PCK")
@@ -543,15 +660,15 @@ int main()
         }
         else if (command == "TRS")
         {
-            setTreasure(mapOfTheGame);
+            setTreasure(mapOfTheGame, player, playerIds);
         }
         else if (command == "WLL")
         {
-            setWall(mapOfTheGame);
+            setWall(mapOfTheGame, player, playerIds);
         }
         else if (command == "TRD")
         {
-            setTrapdoor(mapOfTheGame);
+            setTrapdoor(mapOfTheGame, player, playerIds);
         }
         if (command != "PRT" && command != "NDS" && command != "NPS" && command != "TRS" && command != "WLL" && command != "TRD")
         {
@@ -560,5 +677,4 @@ int main()
     }
 }
 
-// test //
 
