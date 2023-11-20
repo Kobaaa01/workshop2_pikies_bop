@@ -1,34 +1,29 @@
 #include <iostream>
 #include <string>
-#include <vector>
 using namespace std;
- 
-const int MAX_OBJECTS = 100;
-const int MAX_PLAYERS = 9;
-const int MAX_ROWS = 11;
-const int MAX_COLUMNS = 11; 
 
-bool guessedPassword[MAX_PLAYERS];
-bool pickedUp[MAX_PLAYERS];
-bool wonGame[MAX_PLAYERS];
-bool lostGame[MAX_PLAYERS];
 
-int playerIds[MAX_PLAYERS];
+#define MAX_OBJECTS 100
+#define MAX_PLAYERS 9
+#define NONEXISTENT 999
+// Defining the size of the map (the task did not specify the values)
+#define MAX_ROWS 11
+#define MAX_COLUMNS 11
+#define CENTER_THE_MAP 5
 
+// Struct containing every player's coordinates and whether they: guessed the password, picked up the treasure, won the game or lost the game
 struct Player
 {
-    int x, y;
+    int x = 0;
+    int y = 0;
     bool guessedPassword = false;
     bool pickedUp = false;
     bool wonGame = false;
     bool lostGame = false;
-    char playersMap[MAX_ROWS][MAX_COLUMNS];
-    int centerMapX = 5; // X coordinate of the center marker for this player
-    int centerMapY = 5;
 };
 Player player[MAX_PLAYERS];
-
-
+int playerIds[MAX_PLAYERS];
+// Struct containing all the information about coordinates of treasures, trapdoors and walls
 struct Objects
 {
     int treaX;
@@ -40,12 +35,13 @@ struct Objects
 };
 Objects objects[MAX_OBJECTS];
 
-int wallsSize() 
+// Function to count the number of treasures
+int treaSize()
 {
     int count = 0;
-    for (int i = 0; i < MAX_OBJECTS; i++) 
+    for (int i = 0; i < MAX_OBJECTS; i++)
     {
-        if (objects[i].wallX != 0 || objects[i].wallY != 0) 
+        if (objects[i].treaX != 0 || objects[i].treaY != 0)
         {
             count++;
         }
@@ -53,19 +49,7 @@ int wallsSize()
     return count;
 }
 
-int treaSize() 
-{
-    int count = 0;
-    for (int i = 0; i < MAX_OBJECTS; i++) 
-    {
-        if (objects[i].treaX != 0 || objects[i].treaY != 0) 
-        {
-            count++;
-        }
-    }
-    return count;
-}
-
+// Function to count the number of traps
 int trapSize()
 {
     int count = 0;
@@ -79,91 +63,52 @@ int trapSize()
     return count;
 }
 
-void setWall(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[], int playerIds[])
+// Function to set walls on the game map
+void setWall(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
 {
     for (int i = 0; i < MAX_OBJECTS; i++)
     {
-        if (objects[i].wallX == -999 && objects[i].wallY == -999)
+        if (objects[i].wallX == NONEXISTENT && objects[i].wallY == NONEXISTENT)
         {
             cin >> objects[i].wallX;
             cin >> objects[i].wallY;
-            mapOfTheGame[objects[i].wallX + 5][objects[i].wallY + 5] = '#';
-
-            for (int j = 0; j < MAX_PLAYERS; j++)
-            {
-                if (playerIds[j] != 0)
-                {
-                    player[j].playersMap[objects[i].wallX + 5][objects[i].wallY + 5] = '#';
-                }
-            }
+            mapOfTheGame[objects[i].wallX + CENTER_THE_MAP][objects[i].wallY + CENTER_THE_MAP] = '#';
             break;
         }
     }
 }
 
-void setTrapdoor(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[], int playerIds[])
+// Function to set trapdoors on the game map
+void setTrapdoor(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
 {
     for (int i = 0; i < MAX_OBJECTS; i++)
     {
-        if (objects[i].trapX == -999 && objects[i].trapY == -999)
+        if (objects[i].trapX == NONEXISTENT && objects[i].trapY == NONEXISTENT)
         {
             cin >> objects[i].trapX;
             cin >> objects[i].trapY;
-            mapOfTheGame[objects[i].trapX + 5][objects[i].trapY + 5] = '_';
-            for (int j = 0; j < MAX_PLAYERS; j++)
-            {
-                if (playerIds[j] != 0)
-                {
-                    player[j].playersMap[objects[i].trapX + 5][objects[i].trapY + 5] = '_';
-                }
-            }
+            mapOfTheGame[objects[i].trapX + CENTER_THE_MAP][objects[i].trapY + CENTER_THE_MAP] = '_';
             break;
         }
     }
 }
 
-void setTreasure(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[], int playerIds[])
+// Function to set treasures on the game map
+void setTreasure(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
 {
     for (int i = 0; i < MAX_OBJECTS; i++)
     {
-        if (objects[i].treaX == -999 && objects[i].treaY == -999)
+        if (objects[i].treaX == NONEXISTENT && objects[i].treaY == NONEXISTENT)
         {
             cin >> objects[i].treaX;
             cin >> objects[i].treaY;
-            mapOfTheGame[objects[i].treaX + 5][objects[i].treaY + 5] = '+';
-            for (int j = 0; j < MAX_PLAYERS; j++)
-            {
-                if (playerIds[j] != 0)
-                {
-                    player[j].playersMap[objects[i].treaX + 5][objects[i].treaY + 5] = '+';
-                }
-            }
+            mapOfTheGame[objects[i].treaX + CENTER_THE_MAP][objects[i].treaY + CENTER_THE_MAP] = '+';
             break;
         }
     }
 }
 
-// Player adding function //
-void addPlayer(char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
-{
-    for (int j = 0; j < MAX_PLAYERS; j++)
-    {
-        if (playerIds[j] == 0)
-        {
-            playerIds[j] = j + 1;
-            for (int m = 0; m < MAX_ROWS; m++)
-            {
-                for (int n = 0; n < MAX_COLUMNS; n++)
-                {
-                    player[j].playersMap[m][n] = mapOfTheGame[m][n];
-                }
-            }
-            break;
-        }
-    }
-}
-// Player changing function //
-
+// Function to switch to the next active player
 void changePlayer(int& activePlayer)
 {
     if (activePlayer < 9)
@@ -188,14 +133,14 @@ void changePlayer(int& activePlayer)
     }
 }
 
-// Password guessing function //
+// Function for players to guess a password
 void guessPassword(int& activePlayer)
 {
-    if (playerIds[activePlayer-1] != 0)
+    if (playerIds[activePlayer - 1] != 0)
     {
-        unsigned char password = 123;
         if (!player[activePlayer - 1].guessedPassword)
         {
+            unsigned char password = 123;
             bool passwordGuessed = true;
             for (int i = 0; i < 8; i++)
             {
@@ -234,12 +179,13 @@ void guessPassword(int& activePlayer)
         }
     }
 }
-// Checking if player sees a trap function //
-void seeingTrap(int &activePlayer)
+
+// Function to check if a player sees a trap
+void seeingTrap(int& activePlayer)
 {
     for (int j = 0; j < trapSize(); j++)
     {
-        if (((player[activePlayer - 1].y == objects[j].trapY) || (player[activePlayer - 1].y == objects[j].trapY + 1) || (player[activePlayer - 1].y == objects[j].trapY - 1)) && ((player[activePlayer - 1].x == objects[j].trapX) || (player[activePlayer - 1].x == objects[j].trapX + 1) || (player[activePlayer - 1].x == objects[j].trapX - 1)))
+        if (((player[activePlayer - 1].y == objects[j].trapX) || (player[activePlayer - 1].y == objects[j].trapX + 1) || (player[activePlayer - 1].y == objects[j].trapX - 1)) && ((player[activePlayer - 1].x == objects[j].trapY) || (player[activePlayer - 1].x == objects[j].trapY + 1) || (player[activePlayer - 1].x == objects[j].trapY - 1)))
         {
             cout << "You see a trapdoor at (" << objects[j].trapX << "," << objects[j].trapY << ")" << endl;
             break;
@@ -247,12 +193,12 @@ void seeingTrap(int &activePlayer)
     }
 }
 
-// Checking if player sees a treasure function //
+// Function to check if a player sees a treasure
 void seeingTreasure(int& activePlayer)
 {
     for (int i = 0; i < treaSize(); i++)
     {
-        if (((player[activePlayer - 1].y == objects[i].treaY) || (player[activePlayer - 1].y == objects[i].treaY + 1) || (player[activePlayer - 1].y == objects[i].treaY - 1)) && ((player[activePlayer - 1].x == objects[i].treaX) || (player[activePlayer - 1].x == objects[i].treaX + 1) || (player[activePlayer - 1].x == objects[i].treaX - 1)))
+        if (((player[activePlayer - 1].y == objects[i].treaX) || (player[activePlayer - 1].y == objects[i].treaX + 1) || (player[activePlayer - 1].y == objects[i].treaX - 1)) && ((player[activePlayer - 1].x == objects[i].treaY) || (player[activePlayer - 1].x == objects[i].treaY + 1) || (player[activePlayer - 1].x == objects[i].treaY - 1)))
         {
             cout << "You see a treasure at (" << objects[i].treaX << "," << objects[i].treaY << ")" << endl;
             break;
@@ -260,8 +206,8 @@ void seeingTreasure(int& activePlayer)
     }
 }
 
-// Player moving function //
-void movePlayer(int& activePlayer, Player player[], int playerIds[]) {
+// Function to move a player on the game map
+void movePlayer(int& activePlayer) {
     char direction;
     cin >> direction;
     if (player[activePlayer - 1].guessedPassword)
@@ -269,76 +215,19 @@ void movePlayer(int& activePlayer, Player player[], int playerIds[]) {
         if (direction == 'N')
         {
             player[activePlayer - 1].y--;
-            player[activePlayer - 1].centerMapY++;
-            for (int i = MAX_ROWS - 2; i >= 0; --i)
-            {
-                for (int j = 0; j < MAX_COLUMNS; ++j)
-                {
-                    player[activePlayer - 1].playersMap[i + 1][j] = player[activePlayer - 1].playersMap[i][j];
-                }
-            }
-            for (int j = 0; j < MAX_COLUMNS; ++j)
-            {
-                player[activePlayer - 1].playersMap[0][j] = '.';
-            }
         }
         if (direction == 'S')
         {
-
+            player[activePlayer - 1].y++;
         }
         if (direction == 'E')
         {
-
+            player[activePlayer - 1].x++;
         }
         if (direction == 'W')
         {
-
+            player[activePlayer - 1].x--;
         }
-        for (int i = 0; i < MAX_ROWS; ++i)
-        {
-            for (int j = 0; j < MAX_COLUMNS; ++j)
-            {
-                // Reset each cell to empty
-                player[activePlayer - 1].playersMap[i][j] = '.';
-                for (int p = 0; p < MAX_PLAYERS; p++)
-                {
-                    if (p != activePlayer && player[p].y == 0)
-                    {
-                        player[activePlayer - 1].playersMap[5][5 + player[p].x] = '0' + p;
-                    }
-                    else if (p != activePlayer && player[p].y < 0)
-                    {
-                        player[activePlayer - 1].playersMap[5 - player[p].y][5 + player[activePlayer].x] = '0' + activePlayer;
-                    }
-                }
-                player[activePlayer - 1].playersMap[5][5] = '0' + activePlayer-1;
-                // Update treasures
-                for (int t = 0; t < treaSize(); ++t)
-                {
-                    if (i == objects[t].treaY + 5 && j == objects[t].treaX + 5)
-                    {
-                        player[activePlayer - 1].playersMap[j + 1][i] = '+';
-                    }
-                }
-                // Update traps
-                for (int t = 0; t < trapSize(); ++t)
-                {
-                    if (i == objects[t].trapY + 5 && j == objects[t].trapX + 5)
-                    {
-                        player[activePlayer - 1].playersMap[j + 1][i] = '_';
-                    }
-                }
-                // Update walls
-                for (int t = 0; t < wallsSize(); ++t)
-                {
-                    if (i == objects[t].wallY + 5 && j == objects[t].wallX + 5)
-                    {
-                        player[activePlayer - 1].playersMap[j + 1][i] = '#';
-                    }
-                }
-            }
-        }
-        player[activePlayer - 1].playersMap[player[activePlayer - 1].centerMapY][player[activePlayer - 1].centerMapX] = '^';
     }
     else
     {
@@ -346,14 +235,14 @@ void movePlayer(int& activePlayer, Player player[], int playerIds[]) {
     }
     for (int i = 0; i < trapSize(); i++)
     {
-        if (player[activePlayer-1].y == objects[i].trapY && player[activePlayer-1].x == objects[i].trapX)
+        if (player[activePlayer - 1].y == objects[i].trapX && player[activePlayer - 1].x == objects[i].trapY)
         {
             cout << "Player " << activePlayer << " lost" << endl;
             player[activePlayer - 1].lostGame = true;
             return;
         }
     }
-    if (player[activePlayer-1].y == 0 && player[activePlayer-1].x == 0 && player[activePlayer - 1].pickedUp)
+    if (player[activePlayer - 1].y == 0 && player[activePlayer - 1].x == 0 && player[activePlayer - 1].pickedUp)
     {
         cout << "Player " << activePlayer << " won" << endl;
         player[activePlayer - 1].wonGame = true;
@@ -364,207 +253,97 @@ void movePlayer(int& activePlayer, Player player[], int playerIds[]) {
         seeingTrap(activePlayer);
     }
 }
-// Picking up function //
+
+// Function for players to pick up an object
 void pickUp(int& activePlayer)
 {
     for (int i = 0; i < treaSize(); i++)
     {
-        if (player[activePlayer-1].x == objects[i].treaX && player[activePlayer-1].y == objects[i].treaY)
+        if (player[activePlayer - 1].x == objects[i].treaY && player[activePlayer - 1].y == objects[i].treaX)
         {
             player[activePlayer - 1].pickedUp = true;
         }
     }
 }
 
-// Function for PRT 0 //
+// Print function for mode 0
 void prt_0(int& activePlayer)
 {
+    Player& currentPlayer = player[activePlayer - 1];
+
     cout << "Active Player: " << activePlayer << " ";
-    cout << "Coordinates: ";
-    cout << player[activePlayer-1].x << ", " << player[activePlayer-1].y;
-    cout << " Entered: ";
-    if (player[activePlayer - 1].guessedPassword)
-    {
-        cout << "T ";
-    }
-    else
-    {
-        cout << "F ";
-    }
-    cout << "Lost: ";
-    if (player[activePlayer - 1].lostGame)
-    {
-        cout << "T ";
-    }
-    else if (!player[activePlayer - 1].lostGame)
-    {
-        cout << "F ";
-    }
-    cout << "Has Treasure: ";
-    if (player[activePlayer - 1].pickedUp)
-    {
-        cout << "T ";
-    }
-    else if (!player[activePlayer - 1].pickedUp)
-    {
-        cout << "F ";
-    }
-    cout << "Won Game: ";
-    if (player[activePlayer - 1].wonGame)
-    {
-        cout << "T";
-    }
-    else if (!player[activePlayer - 1].wonGame)
-    {
-        cout << "F";
-    }
+    cout << "Coordinates: " << currentPlayer.y << ", " << currentPlayer.x << " ";
+    cout << " Entered: " << (currentPlayer.guessedPassword ? "T " : "F ");
+    cout << "Lost: " << (currentPlayer.lostGame ? "T " : "F ");
+    cout << "Has Treasure: " << (currentPlayer.pickedUp ? "T " : "F ");
+    cout << "Won Game: " << (currentPlayer.wonGame ? "T" : "F");
     cout << endl;
 }
-// Function for PRT 1 //
+
+// Print function for mode 1
 void prt_1(int& activePlayer)
 {
     for (int i = 0; i < MAX_PLAYERS; i++)
     {
-        if (playerIds[i] == activePlayer && playerIds[i] != 0)
+        if (playerIds[i] != 0)
         {
-            cout << "Active Player: " << playerIds[i] << " ";
-            cout << "Coordinates: " << player[i].x << ", " << player[i].y << " ";
-            cout << "Entered: ";
-            if (player[i].guessedPassword)
-            {
-                cout << "T ";
-            }
-            else if (!player[i].guessedPassword)
-            {
-                cout << "F ";
-            }
-            cout << "Lost: ";
-            if (player[i].lostGame)
-            {
-                cout << "T ";
-            }
-            else if (!player[i].lostGame)
-            {
-                cout << "F ";
-            }
-            cout << "Has Treasure: ";
-            if (player[i].pickedUp)
-            {
-                cout << "T ";
-            }
-            else if (!player[i].pickedUp)
-            {
-                cout << "F ";
-            }
-            cout << "Won Game: ";
-            if (player[i].wonGame)
-            {
-                cout << "T";
-            }
-            else if (!player[i].wonGame)
-            {
-                cout << "F";
-            }
-            cout << endl;
-        }
-        if (playerIds[i] != activePlayer && playerIds[i] != 0)
-        {
-            cout << "Player: " << playerIds[i] << " ";
-            cout << "Coordinates: " << player[i].x << ", " << player[i].y << " ";
-            cout << "Entered: ";
-            if (player[i].guessedPassword)
-            {
-                cout << "T ";
-            }
-            else if (!player[i].guessedPassword)
-            {
-                cout << "F ";
-            }
-            cout << "Lost: ";
-            if (player[i].lostGame)
-            {
-                cout << "T ";
-            }
-            else if (!player[i].lostGame)
-            {
-                cout << "F ";
-            }
-            cout << "Has Treasure: ";
-            if (player[i].pickedUp)
-            {
-                cout << "T ";
-            }
-            else if (!player[i].pickedUp)
-            {
-                cout << "F ";
-            }
-            cout << "Won Game: ";
-            if (player[i].wonGame)
-            {
-                cout << "T";
-            }
-            else if (!player[i].wonGame)
-            {
-                cout << "F";
-            }
-            cout << endl;
+            cout << (playerIds[i] == activePlayer ? "Active Player: " : "Player: ") << playerIds[i] << " ";
+            cout << "Coordinates: " << player[i].y << ", " << player[i].x << " ";
+            cout << "Entered: " << (player[i].guessedPassword ? "T " : "F ");
+            cout << "Lost: " << (player[i].lostGame ? "T " : "F ");
+            cout << "Has Treasure: " << (player[i].pickedUp ? "T " : "F ");
+            cout << "Won Game: " << (player[i].wonGame ? "T" : "F") << endl;
         }
     }
 }
 
-void defaultState(Objects objects[], int playerIds[]) 
+// Function to reset the game to its default state
+void defaultState()
 {
     for (int i = 0; i < MAX_PLAYERS; i++) {
         playerIds[i] = 0;
     }
     for (int i = 0; i < MAX_OBJECTS; i++) {
-        objects[i].treaX = -999;
-        objects[i].treaY = -999;
-        objects[i].trapX = -999;
-        objects[i].trapY = -999;
-        objects[i].wallX = -999;
-        objects[i].wallY = -999;
+        objects[i].treaX = NONEXISTENT;
+        objects[i].treaY = NONEXISTENT;
+        objects[i].trapX = NONEXISTENT;
+        objects[i].trapY = NONEXISTENT;
+        objects[i].wallX = NONEXISTENT;
+        objects[i].wallY = NONEXISTENT;
     }
 }
 
-void npsFunction(int& activePlayer, char mapOfTheGame[MAX_ROWS][MAX_COLUMNS], Player player[])
+// Function to set up new players and start the game
+void npsFunction(int& activePlayer, char mapOfTheGame[MAX_ROWS][MAX_COLUMNS])
 {
     int numPlayers;
     cin >> numPlayers;
-    for (int i = 0; i < numPlayers; ++i)
+    if (numPlayers < MAX_PLAYERS)
     {
-        playerIds[i] = i + 1;
-        cin >> player[i].y >> player[i].x;
-        if (player[i].y >= 0 && player[i].y < MAX_COLUMNS && player[i].x >= 0 && player[i].x < MAX_ROWS)
+        for (int i = 0; i < numPlayers; ++i)
         {
-            mapOfTheGame[5+player[i].y][5+player[i].x] = '0' + i;
-        }
-    }
-    for (int i = numPlayers; i < MAX_PLAYERS; ++i)
-    {
-        playerIds[i] = 0;
-    }
-    activePlayer = 1;
-
-    for (int i = 0; i < MAX_PLAYERS; i++) 
-    {
-        if (playerIds[i] != 0) 
-        {
-            for (int n = 0; n < MAX_ROWS; n++) 
+            playerIds[i] = i + 1;
+            cin >> player[i].y >> player[i].x;
+            if (player[i].y >= 0 && player[i].y < MAX_COLUMNS && player[i].x >= 0 && player[i].x < MAX_ROWS)
             {
-                for (int m = 0; m < MAX_COLUMNS; m++) 
-                {
-                    player[i].playersMap[n][m] = mapOfTheGame[n][m];
-                }
+                mapOfTheGame[CENTER_THE_MAP + player[i].y][CENTER_THE_MAP + player[i].x] = '0' + i;
             }
         }
+        for (int i = numPlayers; i < MAX_PLAYERS; ++i)
+        {
+            playerIds[i] = 0;
+        }
+        activePlayer = 1;
+    }
+    else
+    {
+        cout << "ERROR, 10 IS THE MAXIMUM NUMBER OF PLAYERS";
     }
 }
 
-
 int main()
 {
-    // Default players 1 and 2 declaration // 
+    // Default players 1 and 2 declaration
     playerIds[0] = 1;
     playerIds[1] = 2;
     objects[0].treaX = -3;
@@ -572,11 +351,11 @@ int main()
     objects[0].trapX = 3;
     objects[0].trapY = 0;
 
-    // Default active player //
+    // Default active player
     int activePlayer = playerIds[0];
 
-    // Create the map and make it 11x11 with all dots //
-    char mapOfTheGame[MAX_ROWS][MAX_COLUMNS];
+    // Create the map and make it 11x11 with all dots
+    char mapOfTheGame[MAX_ROWS][MAX_COLUMNS]{};
 
     for (int i = 0; i < MAX_ROWS; i++)
     {
@@ -586,21 +365,7 @@ int main()
         }
     }
 
-    for (int j = 0; j < MAX_PLAYERS; j++)
-    {
-        if (playerIds[j] != 0)
-        {
-            for (int n = 0; n < MAX_ROWS; n++)
-            {
-                for (int m = 0; m < MAX_COLUMNS; m++)
-                {
-                    player[j].playersMap[n][m] = '.';
-                }
-            }
-        }
-    }
-
-    // Game //
+    // Game
     while (true)
     {
         string command;
@@ -619,17 +384,19 @@ int main()
             }
             else if (mode == "0+")
             {
-                int submode;
+                string submode;
                 cin >> submode;
-                prt_0(activePlayer);
-                //CREATE function printing things submode distance from player//
-                for (int i = 0; i < MAX_ROWS; i++)
+                if (submode == "5")
                 {
-                    for (int j = 0; j < MAX_COLUMNS; j++)
+                    prt_0(activePlayer);
+                    for (int i = 0; i < MAX_ROWS; i++)
                     {
-                        cout << player[activePlayer-1].playersMap[i][j];
+                        for (int j = 0; j < MAX_COLUMNS; j++)
+                        {
+                            cout << mapOfTheGame[i][j];
+                        }
+                        cout << endl;
                     }
-                    cout << endl;
                 }
             }
         }
@@ -639,7 +406,7 @@ int main()
         }
         else if (command == "MOV")
         {
-            movePlayer(activePlayer, player, playerIds);
+            movePlayer(activePlayer);
         }
         else if (command == "END")
         {
@@ -647,11 +414,11 @@ int main()
         }
         else if (command == "NDS")
         {
-            defaultState(objects, playerIds);
+            defaultState();
         }
         else if (command == "NPS")
         {
-            npsFunction(activePlayer, mapOfTheGame, player);
+            npsFunction(activePlayer, mapOfTheGame);
         }
         else if (command == "SKP");
         else if (command == "PCK")
@@ -660,15 +427,23 @@ int main()
         }
         else if (command == "TRS")
         {
-            setTreasure(mapOfTheGame, player, playerIds);
+            setTreasure(mapOfTheGame);
         }
         else if (command == "WLL")
         {
-            setWall(mapOfTheGame, player, playerIds);
+            setWall(mapOfTheGame);
         }
         else if (command == "TRD")
         {
-            setTrapdoor(mapOfTheGame, player, playerIds);
+            setTrapdoor(mapOfTheGame);
+        }
+        else if (command == "HLP")
+        {
+            cout << "Avaliable commands: PRT [0/1], PSS, MOV, END, NDS, NPS, SKP, PCK, TRS, WLL, TRD, HLP" << endl;
+        }
+        else
+        {
+            cout << "Unknown command. Avaliable commands: PRT [0/1], PSS, MOV, END, NDS, NPS, SKP, PCK, TRS, WLL, TRD, HLP" << endl;
         }
         if (command != "PRT" && command != "NDS" && command != "NPS" && command != "TRS" && command != "WLL" && command != "TRD")
         {
@@ -676,5 +451,3 @@ int main()
         }
     }
 }
-
-
